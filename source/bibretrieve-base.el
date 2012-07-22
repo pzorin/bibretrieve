@@ -245,19 +245,24 @@ ARG is the optional arg."
   )
 
 (defun bibretrieve-find-bibliography-file ()
-   "Find the bibliography file.
+ "Find the bibliography file.
 Try to find some \bibliography declaration in the current buffer."
+  ;; Returns a string with text properties (as expected by read-file-name)
+  ;; or nil if no file can be found
   (save-excursion
     (save-restriction
       (save-match-data
 	(widen)
 	(goto-char (point-min))
 	(if (re-search-forward "^[^%]*\\\\bibliography{\\(.*?\\)[ \\t\\n]*[,}]+" nil t)
-	    (let ((file-string (match-string 1)))
-	      (if (not (string-match ".*\\.bib$" file-string))
-		  (concat file-string ".bib")
-		  (concat file-string nil)
-		  )
+	    (let ((bib-file-name (shell-command-to-string (concat "kpsewhich -format=.bib " (match-string 1)))))
+	      ;; First character of an absolute path is "/" on Unix or a letter on Windows
+	      (if (string-match "[/\w].*" bib-file-name)
+		  ;; Matches the first line without \r and \n
+		  (substring bib-file-name 0 (match-end 0))
+		;; return nil if kpsewhich fails to find any file
+		nil
+		)
 	      )
 	  )
 	)
