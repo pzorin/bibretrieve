@@ -109,15 +109,14 @@ started with the command \\[bibretrieve-get].")
 		  ("bdlall" . "Retrieve+All"))))
 	 (concat "http://www.ams.org/mathscinet/search/publications.html?" (mm-url-encode-www-form-urlencoded pairs))))
 
-;; The url given is no more active
-;; Copied from bibsnarf
+;; Modified from bibsnarf, URL valid as of 2012-07-29
 (defun bibretrieve-zbm-create-url (author title)
   (let* ((pairs `(("ti" . ,title)
 		  ("au" . ,author)
 		  ("type" . "bibtex")
 		  ("format" . "short")
-		  ("maxdocs" . "20"))))
-    (concat "http://www.emis.de/cgi-bin/zmen/ZMATH/en/quick.html?" (mm-url-encode-www-form-urlencoded pairs))))
+		  ("count" . "20"))))
+    (concat "http://www.zentralblatt-math.org/zmath/?" (mm-url-encode-www-form-urlencoded pairs))))
 
 ;; Copied from bibsnarf
 (defun bibretrieve-mrl-create-url (author title)

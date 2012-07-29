@@ -70,7 +70,7 @@
   "BibRetrieve: Retrieve bibliography entries from the internet."
   :group 'tools)
 
-(defvar bibretrieve-installed-backends '("msn" "mrl" "arxiv" "citebase" "inspire")
+(defvar bibretrieve-installed-backends '("msn" "mrl" "arxiv" "citebase" "inspire" "zbm")
   "List of installed backends for BibRetrieve.")
 
 (defcustom bibretrieve-backends '(("msn" . 10) ("arxiv" . 5) ("citebase" . 5))
