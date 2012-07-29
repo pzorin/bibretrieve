@@ -3,24 +3,28 @@ This is the README file for BibRetrieve.
 			     INSTALLATION
 			     ************
 				   
-For an user-installation, it should be sufficient to:
+For a user-installation, it should be sufficient to:
 
-1) Put the files "bibretrieve.elc" and "bibretrieve-base.elc" in some
-   folder, for example in "~/.emacs.d/bibretrieve/".
+1) Put the files "bibretrieve.el" and "bibretrieve-base.el" in some
+   directory, for example in "~/.emacs.d/bibretrieve/".
+   This can be done by hand or using the following commands.
+
+   $ mkdir -p ~/.emacs.d
+   $ cd ~/.emacs.d
+   $ git clone git://github.com/pzorin/bibretrieve.git
 
 2) Add an instruction to the file "~/.emacs" to load BibRetrieve;
    something like that does the trick:
 
-	(load "~/.emacs.d/bibretrieve/bibretrieve")
+   (add-to-list 'load-path "~/.emacs.d/bibretrieve")
+   ; Recompile if .el is newer than .elc
+   (byte-recompile-directory "~/.emacs.d/bibretrieve" 0)
+   (load "bibretrieve")
 
-3) (If you want) do a minimal configuration (see CONFIGURATION below).
+3) (optionally) do a minimal configuration (see CONFIGURATION below).
 
-4) Enjoy BibRetrieve calling "M-x bibretrieve", or "C-u M-x
+4) Enjoy BibRetrieve calling "M-x bibretrieve" or "C-u M-x
    bibretrieve" from Emacs.
-
-Note: if the byte-compiled file do not work, you can try instead with
-the source files ".el" at point 1).
-
 
 			    CONFIGURATION
 			    *************
@@ -28,9 +32,9 @@ the source files ".el" at point 1).
 BibRetrieve can be configured with customize.
 Anyway, it could be easier to add some line to the file "~/.emacs".
 
-To configure the backends used, set the variable
-"bibretrieve-backends". This is an alist with askeys the names of the
-backends and as values the timeouts. The default configuration is:
+To configure the backends used, set the variable "bibretrieve-backends".
+This is an alist with the names of the backends as keys
+and the timeouts as values. The default configuration is:
 
 	 (setq bibretrieve-backends '(("msn" . 10) ("arxiv" . 5) ("citbase" . 5)))
 
@@ -43,16 +47,16 @@ curl, set the variable "mm-url-program" to the program and the variable
 			       BACKENDS
 			       ********
 
-Supported backends are at the moment:
+Supported backends (with keys for "bibretrieve-backends") are at the moment:
 
-	  ArXiv:              "http://adsabs.harvard.edu"
-	  MathSciNet (msn):   "http://www.ams.org/mathscinet"
-	  MrLookup (mrl):     "http://www.ams.org/mrlookup"
-	  Citebase:           "http://www.citebase.org"
-	  Inspire:            "http://inspirehep.net"
+	  Backend      Key		URL
 
-The corresponding keys to use for the variable "bibretrieve-backends"
-are arxiv, msn, mrl, citebase, inspire.
+	  ArXiv	       "arxiv"		"http://adsabs.harvard.edu"
+	  MathSciNet   "msn"		"http://www.ams.org/mathscinet"
+	  MrLookup     "mrl"		"http://www.ams.org/mrlookup"
+	  Citebase     "citebase"	"http://www.citebase.org"
+	  Inspire      "inspire"	"http://inspirehep.net"
+	  ZB MATH      "zbm"		"http://www.zentralblatt-math.org/zmath"
 
 If you want to add a backend, read the Commentary section in the
 source file "bibretrieve.el".
@@ -62,8 +66,8 @@ source file "bibretrieve.el".
 			   ****************
 
 This program has been inspired by bibsnarf
-(http://www.princeton.edu/~hhalvors/tools/bibsnarf.el).  The functions
-that create the urls for most backends are taken from there.
+(http://www.princeton.edu/~hhalvors/tools/bibsnarf.el).
+The functions that create the urls for most backends are taken from there.
 
 This program uses the library mm-url.
 

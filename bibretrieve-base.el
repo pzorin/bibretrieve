@@ -4,7 +4,7 @@
 
 ;; Author: Antonio Sartori <anto_sart -at- yahoo -dot- it>
 ;; Version: 0.1
-;; Time-stamp: <2012-03-17 13:04:24 asartori>
+;; Time-stamp: <2012-07-29 13:48:20 pavel>
 
 ;; This file is part of BibRetrieve.
 
@@ -24,40 +24,13 @@
 
 ;;; Commentary:
 ;;
-;; This program searches the web for BibTeX entries matching the given
-;; Author end/or Title.  It displays then a selection buffer, that permits
-;; to examine and choose entries to add to the bibliography file, or to
-;; insert into the current buffer.
+;; This file contains the code that (with the exception of
+;; the function bibretrieve) is not directly exposed to the user.
 
-;; The function is called through "M-x bibretrieve".  Then it prompts for
-;; author and title.  For an advanced use, that permits to select which
-;; backend to use, call it with "C-u M-x bibretrieve".
-
-;; The configuration is done with the variable bibretrieve-backends, that
-;; is an alist with pairs containing the backend to use and the timeout
-;; for it.
-
-;; The url is retrieved via mm-url.  You may want to customize the
-;; variable mm-url-use-external and mm-url-program.
-
-;; Supported backends are at the moment
-;; ArXiv:              "http://adsabs.harvard.edu"
-;; MathSciNet (msn):   "http://www.ams.org/mathscinet"
-;; MrLookup (mrl):     "http://www.ams.org/mrlookup"
-;; Citebase:           "http://www.citebase.org"
-;; Inspire:            "http://inspirehep.net"
-
-;; To create a new backend, it is enough to define a new function
+;; This is the appropriate place to define a backend function
 ;; "bibretrieve-BACKEND-create-url" that takes as input author and title
-;; and returns a url that, when retrieved, gives some bibtex entries.  It
-;; is then necessary to advise bibretrieve of the new backend, adding it
-;; to the list "bibretrieve-installed-backends".
-
-;; Acknowledgments: This program has been inspired by bibsnarf.  The
-;; functions that create the urls for most backends are taken from
-;; there.  This program uses the library mm-url.  This programs also uses
-;; lot of function of RefTeX.  The selection process is entirely based on
-;; reftex-sel.  Many function have also been adapted from there.
+;; and returns a url that, when retrieved, gives some bibtex entries.
+;; Remember to add it to the list "bibretrieve-installed-backends" afterwards.
 
 ;;; Code:
 
