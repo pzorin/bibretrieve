@@ -226,7 +226,7 @@ Try to find some \bibliography declaration in the current buffer."
       (save-match-data
 	(widen)
 	(goto-char (point-min))
-	(if (re-search-forward "^[^%]*\\\\bibliography{\\(.*?\\)[ \\t\\n]*[,}]+" nil t)
+	(if (re-search-forward "^[^%]*\\\\bibliography{\\(.*?\\)[ ,}]+" nil t)
 	    (let ((bib-file-name (shell-command-to-string (concat "kpsewhich -format=.bib " (match-string 1)))))
 	      ;; First character of an absolute path is "/" on Unix or a letter on Windows
 	      (if (string-match "[/\w].*" bib-file-name)
