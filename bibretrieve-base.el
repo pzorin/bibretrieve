@@ -444,7 +444,7 @@ ARG is the optional argument."
                     (reftex-select-item
                      bibretrieve-select-prompt
                      bibretrieve-select-help
-                     reftex-select-bib-map
+                     reftex-select-bib-mode-map
                      nil
                      'bibretrieve-selection-callback nil))
               (setq key (car rtn)
