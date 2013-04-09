@@ -217,29 +217,15 @@ ARG is the optional arg."
   )
 
 (defun bibretrieve-find-bibliography-file ()
- "Find the bibliography file.
-Try to find some \bibliography declaration in the current buffer."
+ "Try to find a bibliography file using RefTeX."
   ;; Returns a string with text properties (as expected by read-file-name)
   ;; or nil if no file can be found
-  (save-excursion
-    (save-restriction
-      (save-match-data
-	(widen)
-	(goto-char (point-min))
-	(if (re-search-forward "^[^%\n]*\\\\bibliography{\\(.*?\\)[ ,}]+" nil t)
-	    (let ((bib-file-name (shell-command-to-string (concat "kpsewhich -format=.bib " (match-string 1)))))
-	      ;; First character of an absolute path is "/" on Unix or a letter on Windows
-	      (if (string-match "[/\w].*" bib-file-name)
-		  ;; Matches the first line without \r and \n
-		  (substring bib-file-name 0 (match-end 0))
-		;; return nil if kpsewhich fails to find any file
-		nil
-		)
-	      )
-	  )
-	)
-      )
-    )
+  (let ((bibretrieve-bibfile-list nil))
+  (setq bibretrieve-bibfile-list (reftex-get-bibfile-list))
+  ; This sets bibretrieve-bibfile-list to a list of strings with
+  ; names of bib files. This does nothing if RefTeX finds no bib files
+(if bibretrieve-bibfile-list
+(car bibretrieve-bibfile-list) nil))
   )
 
 (defun bibretrieve-find-default-bibliography-file ()
