@@ -1,4 +1,9 @@
 This is the README file for BibRetrieve.
+                             REQUIREMENTS
+                             ************
+Emacs 24.3 is needed to run the current version of bibretrieve.
+(tested with version 24.3.1 from Ubuntu packages)
+Emacs 24.2 will NOT work due to a bug in reftex-get-bibfile-list.
 
 			     INSTALLATION
 			     ************
