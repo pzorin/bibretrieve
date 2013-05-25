@@ -1,9 +1,8 @@
 This is the README file for BibRetrieve.
                              REQUIREMENTS
                              ************
-Emacs 24.3 is needed to run the current version of bibretrieve.
-(tested with version 24.3.1 from Ubuntu packages)
-Emacs 24.2 will NOT work due to a bug in reftex-get-bibfile-list.
+AUCTeX 11.87 is recommended to run the current version of bibretrieve.
+You might want to update AUCTeX anyway because it now supports biblatex.
 
 			     INSTALLATION
 			     ************
@@ -41,7 +40,10 @@ To configure the backends used, set the variable "bibretrieve-backends".
 This is an alist with the names of the backends as keys
 and the timeouts as values. The default configuration is:
 
-	 (setq bibretrieve-backends '(("msn" . 10) ("arxiv" . 5) ("citbase" . 5)))
+	 (setq bibretrieve-backends '(("mrl" . 10) ("arxiv" . 5) ("zbm" . 5)))
+
+These are the major freely accessible sources of bibliographic information
+for mathematics: Math Reviews, arXiv, and Zentralblatt MATH.
 
 Urls are get through mm-url. As default, this works through the
 library url. If you want to use an external program, like wget or

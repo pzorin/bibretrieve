@@ -66,10 +66,10 @@
   "BibRetrieve: Retrieve bibliography entries from the internet."
   :group 'tools)
 
-(defvar bibretrieve-installed-backends '("msn" "mrl" "arxiv" "citebase" "inspire" "zbm")
+(defvar bibretrieve-installed-backends '("msn" "mrl" "arxiv" "citebase" "inspire" "zbm" )
   "List of installed backends for BibRetrieve.")
 
-(defcustom bibretrieve-backends '(("msn" . 10) ("arxiv" . 5) ("citebase" . 5))
+(defcustom bibretrieve-backends '(("mrl" . 10) ("arxiv" . 5) ("zbm" . 5))
   "Backends customization variable for BibRetrieve.
 
 Backends to use for the search, together with a timeout

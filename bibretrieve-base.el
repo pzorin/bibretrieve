@@ -91,17 +91,11 @@ started with the command \\[bibretrieve-get].")
 		  ("count" . "20"))))
     (concat "http://www.zentralblatt-math.org/zmath/?" (mm-url-encode-www-form-urlencoded pairs))))
 
-;; Copied from bibsnarf
 (defun bibretrieve-mrl-create-url (author title)
-  (let* ((pairs `(("s3" . ,author)
-		  ("pg3" . "ICN")
-		  ("s4" . ,title)
-		  ("pg4" . "TI")
-		  ("s5" . "")
-		  ("pg5" . "JOUR")
-		  ("format" . "bibtex")
-		  ("Search" . "Search"))))
-    (concat "http://www.ams.org/mrlookup?" (mm-url-encode-www-form-urlencoded pairs))))
+  (let* ((pairs `(("ti" . ,title)
+		  ("au" . ,author)
+		  ("format" . "bibtex"))))
+	 (concat "http://www.ams.org/mrlookup?" (mm-url-encode-www-form-urlencoded pairs))))
 
 ;; Copied from bibsnarf
 (defun bibretrieve-arxiv-create-url (author title)
