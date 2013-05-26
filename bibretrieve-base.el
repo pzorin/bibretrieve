@@ -171,7 +171,7 @@ started with the command \\[bibretrieve-get].")
 (defun bibretrieve-retrieve (author title backends &optional newtimeout)
   "Search AUTHOR and TITLE on BACKENDS.
 If NEWTIMEOUT is given, this replaces the timeout for all backends.
-Returns buffer with results."
+Returns list of buffers with results."
   (let (failed not-found var buffers)
     (dolist (backend backends)
       (let* ((timeout (or (or newtimeout (cdr (assoc backend bibretrieve-backends))) "0"))
@@ -394,7 +394,15 @@ ARG is the optional argument."
         (not
          (catch 'done
            ;; Retrieve and scan entries
-           (setq found-list (bibretrieve-extract-bib-entries (bibretrieve-prompt-and-retrieve arg)))
+	   (let ((buffers (bibretrieve-prompt-and-retrieve arg)) buffer-list buffer)
+	     (setq found-list (bibretrieve-extract-bib-entries buffers))
+	     (setq buffer-list (if (listp buffers) buffers (list buffers)))
+	     (while buffer-list
+	       (setq buffer (car buffer-list)
+		     buffer-list (cdr buffer-list))
+	       (kill-buffer buffer)
+	       )
+	     )
 
            (unless found-list
              (error "Sorry, no matches found"))
@@ -524,7 +532,8 @@ bibliography file.
     (progn
       (reftex-kill-temporary-buffers)
       (reftex-kill-buffer "*BibRetrieve Record*")
-      (reftex-kill-buffer "*RefTeX Select*"))))
+      (reftex-kill-buffer "*RefTeX Select*")
+      (kill-buffer "bibretrieve-results-"))))
 
 ;; Adapted from RefTeX
 (defun bibretrieve-do-retrieve (&optional arg)
