@@ -532,8 +532,7 @@ bibliography file.
     (progn
       (reftex-kill-temporary-buffers)
       (reftex-kill-buffer "*BibRetrieve Record*")
-      (reftex-kill-buffer "*RefTeX Select*")
-      (kill-buffer "bibretrieve-results-"))))
+      (reftex-kill-buffer "*RefTeX Select*"))))
 
 ;; Adapted from RefTeX
 (defun bibretrieve-do-retrieve (&optional arg)
@@ -549,7 +548,7 @@ ARG is the optional argument."
     ;; (unless selected-entries (message "Quit"))
  
     ;; (insert (bibretrieve-extract-bib-items selected-entries))
-    (message "fin qui ok")
+    ;; (message "fin qui ok")
 
     (if (stringp selected-entries)
       (message selected-entries)
