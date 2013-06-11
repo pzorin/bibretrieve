@@ -211,15 +211,18 @@ ARG is the optional arg."
   )
 
 (defun bibretrieve-find-bibliography-file ()
- "Try to find a bibliography file using RefTeX."
+  "Try to find a bibliography file using RefTeX."
   ;; Returns a string with text properties (as expected by read-file-name)
-  ;; or nil if no file can be found
+  ;; or empty string if no file can be found
   (let ((bibretrieve-bibfile-list nil))
-  (setq bibretrieve-bibfile-list (reftex-get-bibfile-list))
-  ; This sets bibretrieve-bibfile-list to a list of strings with
-  ; names of bib files. This does nothing if RefTeX finds no bib files
-(if bibretrieve-bibfile-list
-(car bibretrieve-bibfile-list) nil))
+    (condition-case nil
+	(setq bibretrieve-bibfile-list (reftex-get-bibfile-list))
+      (error (ignore-errors
+	       (setq bibretrieve-bibfile-list (reftex-default-bibliography))))
+      )
+    (if bibretrieve-bibfile-list
+	(car bibretrieve-bibfile-list) "")
+    )
   )
 
 (defun bibretrieve-find-default-bibliography-file ()
