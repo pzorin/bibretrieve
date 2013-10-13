@@ -6,7 +6,7 @@
 ;; Version: 0.1
 ;; Time-stamp: <2012-07-29 14:02:02 pavel>
 ;; Keywords: bibtex, latex, mathscinet, arxiv, zbmath
-;; Package-Requires: ((reftex "4.0"))
+;; Package-Requires: ((auctex "11.87") (emacs "24.3"))
 
 ;; This file is part of BibRetrieve.
 
