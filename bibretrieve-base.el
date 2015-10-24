@@ -32,6 +32,14 @@
 ;; and returns a url that, when retrieved, gives some bibtex entries.
 ;; Remember to add it to the list "bibretrieve-installed-backends" afterwards.
 
+;; Edit: There are now two ways to define a new backend
+;; First possibility, as before, is to define a function
+;; "bibretrieve-BACKEND-create-url" that takes as input author and title and
+;; returns a url that, when retrieve, gives some bibtex entries.
+;; The second possibility is to define a function "bibretrieve-BACKEND-http"
+;; which takes as input author and title and returns a buffer
+;; with bibtex entries.
+
 ;;; Code:
 
 (eval-when-compile (require 'cl))
@@ -83,13 +91,41 @@ started with the command \\[bibretrieve-get].")
 	 (concat "http://www.ams.org/mathscinet/search/publications.html?" (mm-url-encode-www-form-urlencoded pairs))))
 
 ;; Modified from bibsnarf, URL valid as of 2012-07-29
-(defun bibretrieve-zbm-create-url (author title)
+;; Function not used anymore
+(defun bibretrieve-zbm-create-url-old (author title)
   (let* ((pairs `(("ti" . ,title)
 		  ("au" . ,author)
 		  ("type" . "bibtex")
 		  ("format" . "short")
 		  ("count" . "20"))))
     (concat "http://www.zentralblatt-math.org/zmath/?" (mm-url-encode-www-form-urlencoded pairs))))
+
+(defun bibretrieve-matches-in-buffer (regexp &optional buffer)
+  "return a list of matches of REGEXP in BUFFER or the current buffer if not given."
+  (let ((matches))
+    (save-match-data
+      (save-excursion
+        (with-current-buffer (or buffer (current-buffer))
+          (save-restriction
+            (widen)
+            (goto-char 1)
+            (while (search-forward-regexp regexp nil t 1)
+              (push (match-string 0) matches)))))
+      matches)))
+
+(defun bibretrieve-zbm-http (author title)
+  (let* ((url (concat "https://zbmath.org/?q=au:" author ",ti:" title ))
+	 (buffer (generate-new-buffer (generate-new-buffer-name "bibretrieve-results-"))))
+    (with-current-buffer buffer
+      (message "Retrieving %s" url)
+      (let* ()
+	(mm-url-insert-file-contents url)
+	(let* ((list-of-bib-urls (bibretrieve-matches-in-buffer "bibtex/[a-zA-Z0-9]*.bib" buffer)))
+	  (erase-buffer)
+	  (dolist (bib-url list-of-bib-urls)
+	    (setq bib-url (concat "https://zbmath.org/" bib-url))
+	    (mm-url-insert-file-contents bib-url))
+	    buffer )))))
 
 (defun bibretrieve-mrl-create-url (author title)
   (let* ((pairs `(("ti" . ,title)
@@ -168,6 +204,16 @@ started with the command \\[bibretrieve-get].")
 ;;     (message "Retrieving %s" url)
 ;;     (url-retrieve-synchronously url)))
 
+(defun bibretrieve-retrieve-backend (author title backend timeout)
+  "Call the backend BACKEND with AUTHOR, TITLE and TIMEOUT. Return buffer with results"
+  (let* ((function-backend-simple (intern (concat "bibretrieve-" backend "-create-url")))
+    (function-backend (intern (concat "bibretrieve-" backend "-http"))))
+    (if (functionp function-backend-simple)
+	      (with-timeout (timeout) (bibretrieve-http (funcall function-backend-simple author title)))
+      (if (functionp function-backend)
+	  (with-timeout (timeout) (funcall function-backend author title)))
+)))
+      
 (defun bibretrieve-retrieve (author title backends &optional newtimeout)
   "Search AUTHOR and TITLE on BACKENDS.
 If NEWTIMEOUT is given, this replaces the timeout for all backends.
@@ -175,18 +221,22 @@ Returns list of buffers with results."
   (let (failed not-found var buffers)
     (dolist (backend backends)
       (let* ((timeout (or (or newtimeout (cdr (assoc backend bibretrieve-backends))) "0"))
-	    (function-backend (intern (concat "bibretrieve-" backend "-create-url")))
-	    buffer)
-	(if (functionp function-backend)
-	    (progn (setq buffer (with-timeout (timeout) (bibretrieve-http (funcall function-backend author title))))
-		   (if (bufferp buffer)
-		       (add-to-list 'buffers buffer)
-		     (add-to-list 'failed backend)))
-	  (add-to-list 'not-found backend))))
-    (when failed
+	    ;; (function-backend (intern (concat "bibretrieve-" backend "-create-url")))
+	;;    buffer)
+	;; (if (functionp function-backend)
+	;;     (progn (setq buffer (with-timeout (timeout) (bibretrieve-http (funcall function-backend author title))))
+	;; 	   (if (bufferp buffer)
+	;; 	       (add-to-list 'buffers buffer)
+	;; 	     (add-to-list 'failed backend)))
+	;;   (add-to-list 'not-found backend))))
+	     (buffer (bibretrieve-retrieve-backend author title backend timeout)))
+	(if (bufferp buffer)
+	    (add-to-list 'buffers buffer)
+	  (add-to-list 'failed backend))))
+	(when failed
 	(message (concat "Following backends failed: " (mapconcat 'identity failed " "))))
-    (when not-found
-      (message (concat "Following backends don't exist: " (mapconcat 'identity not-found " "))))
+    ;; (when not-found
+    ;;   (message (concat "Following backends don't exist: " (mapconcat 'identity not-found " "))))
     buffers))
 
 (defun bibretrieve-prompt-and-retrieve (&optional arg)
