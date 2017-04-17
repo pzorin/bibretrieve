@@ -90,16 +90,6 @@ started with the command \\[bibretrieve-get].")
 		  ("bdlall" . "Retrieve+All"))))
 	 (concat "http://www.ams.org/mathscinet/search/publications.html?" (mm-url-encode-www-form-urlencoded pairs))))
 
-;; Modified from bibsnarf, URL valid as of 2012-07-29
-;; Function not used anymore
-(defun bibretrieve-zbm-create-url-old (author title)
-  (let* ((pairs `(("ti" . ,title)
-		  ("au" . ,author)
-		  ("type" . "bibtex")
-		  ("format" . "short")
-		  ("count" . "20"))))
-    (concat "http://www.zentralblatt-math.org/zmath/?" (mm-url-encode-www-form-urlencoded pairs))))
-
 (defun bibretrieve-matches-in-buffer (regexp &optional buffer)
   "return a list of matches of REGEXP in BUFFER or the current buffer if not given."
   (let ((matches))
@@ -114,18 +104,23 @@ started with the command \\[bibretrieve-get].")
       matches)))
 
 (defun bibretrieve-zbm-http (author title)
-  (let* ((url (concat "https://zbmath.org/?q=au:" author ",ti:" title ))
-	 (buffer (generate-new-buffer (generate-new-buffer-name "bibretrieve-results-"))))
+  (let* ((url (concat "https://zbmath.org/?" (mm-url-encode-www-form-urlencoded `(("au" . ,author) ("ti" . ,title)))))
+	 (buffer (generate-new-buffer (generate-new-buffer-name "bibretrieve-results-")))
+	 list-of-bib-urls
+	 bib-url)
     (with-current-buffer buffer
       (message "Retrieving %s" url)
-      (let* ()
-	(mm-url-insert-file-contents url)
-	(let* ((list-of-bib-urls (bibretrieve-matches-in-buffer "bibtex/[a-zA-Z0-9]*.bib" buffer)))
-	  (erase-buffer)
-	  (dolist (bib-url list-of-bib-urls)
-	    (setq bib-url (concat "https://zbmath.org/" bib-url))
-	    (mm-url-insert-file-contents bib-url))
-	    buffer )))))
+      (mm-url-insert-file-contents url)
+      (setq list-of-bib-urls (bibretrieve-matches-in-buffer "bibtex/[a-zA-Z0-9.]*.bib" buffer))
+      (erase-buffer)
+      (dolist (bib-url list-of-bib-urls)
+	(setq bib-url (concat "https://zbmath.org/" bib-url))
+	(message "Retrieving %s" bib-url)
+	(mm-url-insert-file-contents bib-url)
+	(goto-char (point-max))
+	(insert "\n") ; A bibtex entry may not start on the line on which the previous entry ends
+	)
+      buffer)))
 
 (defun bibretrieve-mrl-create-url (author title)
   (let* ((pairs `(("ti" . ,title)
