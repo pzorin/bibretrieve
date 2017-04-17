@@ -122,18 +122,57 @@ started with the command \\[bibretrieve-get].")
 	)
       buffer)))
 
+(defun bibretrieve-arxiv-http (author title)
+  (let* ((url (concat "http://adsabs.harvard.edu/cgi-bin/nph-abs_connect?"
+	  (mm-url-encode-www-form-urlencoded `(("db_key" . "PRE")
+				       ("aut_req" . "YES")
+				       ("aut_logic" . "SIMPLE")
+				       ("author" . ,author)
+				       ("ttl_req" . "YES")
+				       ("ttl_logic" . "AND")
+				       ("title" . ,title)
+				       ("data_type" . "BIBTEX")))))
+	 (buffer (generate-new-buffer (generate-new-buffer-name "bibretrieve-results-"))))
+    (with-current-buffer buffer
+      (message "Retrieving %s" url)
+      (mm-url-insert-file-contents url)
+      ;; Remove useless fields
+      (goto-char (point-min))
+      (while (re-search-forward "^.*adsurl =.*\n" nil t)
+	(replace-match ""))
+      (goto-char (point-min))
+      (while (re-search-forward "^.*adsnote =.*\n" nil t)
+	(replace-match ""))
+      (goto-char (point-min))
+      (while (re-search-forward "^.*keywords =.*\n" nil t)
+	(replace-match ""))
+      (goto-char (point-min))
+      ; arxiv is not a journal, use misc type instead of article
+      (while (re-search-forward "^.*journal.*" nil t)
+	(replace-match "note = {Preprint},"))
+      (goto-char (point-min))
+      (while (re-search-forward "\"{" nil t)
+	(replace-match "{"))
+      (goto-char (point-min))
+      (while (re-search-forward "}\"" nil t)
+	(replace-match "}"))
+      ; generate readable citation keys
+      (goto-char (point-min))
+      (while (re-search-forward "@article.*$" nil t)
+	(let ((arxivid (save-match-data
+			 (save-excursion
+			   (re-search-forward "eprint = {\\([a-zA-Z\\.-]*/\\)?\\([0-9\\.]+\\)}" nil t)
+			   (match-string 2)
+			   ))))
+	  (message arxivid)
+	  (replace-match (concat "@misc{arxiv:" arxivid ","))))
+      buffer)))
+
 (defun bibretrieve-mrl-create-url (author title)
   (let* ((pairs `(("ti" . ,title)
 		  ("au" . ,author)
 		  ("format" . "bibtex"))))
 	 (concat "http://www.ams.org/mrlookup?" (mm-url-encode-www-form-urlencoded pairs))))
-
-;; Copied from bibsnarf
-(defun bibretrieve-arxiv-create-url (author title)
-  (concat "http://adsabs.harvard.edu/cgi-bin/nph-abs_connect?db_key=PRE&"
-	  "&aut_req=YES&aut_logic=AND&author=" (mm-url-form-encode-xwfu author)
-	  "&ttl_req=YES&ttl_logic=AND&title=" (mm-url-form-encode-xwfu title)
-	  "&data_type=BIBTEX"))
 
 ;; Modified from bibsnarf
 (defun bibretrieve-citebase-create-url (author title)
@@ -191,13 +230,6 @@ started with the command \\[bibretrieve-get].")
       (message "Retrieving %s" url)
       (mm-url-insert-file-contents url))
     buffer))
-;;   (if bibretrieve-executable
-;;     (let ((buffer (generate-new-buffer (generate-new-buffer-name "bibretrieve-results-"))))
-;;       (message "Retrieving with %s %s" bibretrieve-executable url)
-;;       (call-process bibretrieve-executable nil buffer nil url)
-;;       buffer)
-;;     (message "Retrieving %s" url)
-;;     (url-retrieve-synchronously url)))
 
 (defun bibretrieve-retrieve-backend (author title backend timeout)
   "Call the backend BACKEND with AUTHOR, TITLE and TIMEOUT. Return buffer with results"
