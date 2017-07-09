@@ -1,10 +1,8 @@
 ;;; bibretrieve.el --- Retrieving BibTeX entries from the web
 
-;; Copyright (C) 2012
-
-;; Author: Antonio Sartori <anto_sart -at- yahoo -dot- it>
-;; Version: 0.1
-;; Time-stamp: <2012-07-29 14:02:02 pavel>
+;; Copyright (C)
+;; 2012, 2015 Antonio Sartori
+;; 2012, 2013, 2017 Pavel Zorin-Kranich
 ;; Keywords: bibtex, latex, mathscinet, arxiv, zbmath
 ;; Package-Requires: ((auctex "11.87") (emacs "24.3"))
 
@@ -37,14 +35,14 @@
 
 ;; The configuration is done with the variable bibretrieve-backends, that
 ;; is an alist with pairs containing the backend to use and the timeout
-;; for it. See the README file for the list of supported backends.
+;; for it.  See the README file for the list of supported backends.
 
 ;; To create a new backend define a new function
-;; "bibretrieve-BACKEND-create-url" that takes as input author and title
-;; and returns a url that, when retrieved, gives some bibtex entries.
+;; "bibretrieve-backend-NAME" that takes as input author and title
+;; and returns a buffer that contains some bibtex entries.
 ;; The function should be defined in "bibretrieve-base.el".
 ;; It is then necessary to advise bibretrieve of the new backend,
-;; adding it to the list "bibretrieve-installed-backends".
+;; adding NAME to the list "bibretrieve-installed-backends".
 
 ;; The url is retrieved via mm-url.  You may want to customize the
 ;; variable mm-url-use-external and mm-url-program.
@@ -53,7 +51,7 @@
 ;; functions that create the urls for most backends are taken from
 ;; there.  This program uses the library mm-url.  This programs also uses
 ;; lot of function of RefTeX.  The selection process is entirely based on
-;; reftex-sel.  Many function have also been adapted from there.
+;; reftex-sel.  Many functions have also been adapted from there.
 
 ;;; Code:
 
