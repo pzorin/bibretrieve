@@ -8,9 +8,12 @@ Requirements
 Installation
 ------------
 
-For a user-installation, it should be sufficient to:
+The esiest way is to install from MELPA:
+[![MELPA](http://melpa.milkbox.net/packages/bibretrieve-badge.svg)](http://melpa.milkbox.net/#/bibretrieve)
 
-* Save `bibretrieve.el` and `bibretrieve-base.el` in `~/.emacs.d/bibretrieve/`, e.g. by cloning this repository:
+If you have to install manually and for development:
+
+* Clone the repository:
 
 ```sh
 mkdir -p ~/.emacs.d
@@ -27,9 +30,10 @@ git clone git://github.com/pzorin/bibretrieve.git
 (load "bibretrieve")
 ```
 
-* (optionally) do a minimal configuration (see "Configuration" below).
+Usage
+-----
 
-* Enjoy BibRetrieve calling `M-x bibretrieve` or `C-u M-x bibretrieve` from Emacs.
+`M-x bibretrieve` or `C-u M-x bibretrieve`.
 
 Configuration
 -------------
