@@ -64,7 +64,6 @@ started with the command \\[bibretrieve-get].")
  e / E      Append all (marked/unmarked) entries to default BibTeX file.
  a / A      Put all (marked) entries into current buffer.")
 
-;; Copied from bibsnarf
 (defun bibretrieve-backend-msn (author title)
   (let* ((pairs `(("bdlback" . "r=1")
 		  ("dr" . "all")
@@ -75,8 +74,16 @@ started with the command \\[bibretrieve-get].")
 		  ("s4" . ,author)
 		  ("fn" . "130")
 		  ("fmt" . "bibtex")
-		  ("bdlall" . "Retrieve+All"))))
-	 (bibretrieve-http (concat "http://www.ams.org/mathscinet/search/publications.html?" (mm-url-encode-www-form-urlencoded pairs)))))
+		  ("bdlall" . "Retrieve+All")))
+(url (concat "http://www.ams.org/mathscinet/search/publications.html?" (mm-url-encode-www-form-urlencoded pairs)))
+	 (buffer (bibretrieve-generate-new-buffer)))
+    (with-current-buffer buffer
+      (message "Retrieving %s" url)
+      (mm-url-insert-file-contents url)
+(goto-char (point-min))
+      (while (re-search-forward "URL = {https://doi.org/" nil t)
+	(replace-match "DOI = {"))
+      buffer)))
 
 (defun bibretrieve-matches-in-buffer (regexp &optional buffer)
   "Return a list of matches of REGEXP in BUFFER or the current buffer if not given."
@@ -154,6 +161,10 @@ started with the command \\[bibretrieve-get].")
 			   ))))
 	  (message arxivid)
 	  (replace-match (concat "@misc{arxiv:" arxivid ",") 1)))
+;; Add archive prefix to old style identifiers
+      (goto-char (point-min))
+      (while (re-search-forward "^.*eprint = {math/" nil t)
+	(replace-match "archivePrefix = \"arXiv\",\neprint = {math/"))
       buffer)))
 
 (defun bibretrieve-backend-mrl (author title)
