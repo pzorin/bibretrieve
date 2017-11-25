@@ -1,4 +1,4 @@
-;;; bibretrieve-base.el --- Retrieving BibTeX entries from the web
+;;; bibretrieve-base.el --- Retrieve BibTeX entries from the internet
 
 ;; Copyright (C)
 ;; 2012, 2015 Antonio Sartori

@@ -1,9 +1,12 @@
-;;; bibretrieve.el --- Retrieving BibTeX entries from the web
+;;; bibretrieve.el --- Retrieve BibTeX entries from the internet
 
 ;; Copyright (C)
 ;; 2012, 2015 Antonio Sartori
 ;; 2012, 2013, 2017 Pavel Zorin-Kranich
-;; Keywords: bibtex, latex, mathscinet, arxiv, zbmath
+;; Author: Antonio Sartori
+;; Maintainer: Pavel Zorin-Kranich <pzorin@uni-bonn.de>
+;; Homepage: https://github.com/pzorin/bibretrieve
+;; Keywords: bibtex, bibliography, mathscinet, arxiv, zbmath
 ;; Package-Requires: ((auctex "11.87") (emacs "24.3"))
 
 ;; This file is part of BibRetrieve.
@@ -24,29 +27,30 @@
 
 ;;; Commentary:
 ;;
-;; This program searches the web for BibTeX entries matching the given
-;; Author end/or Title.  It displays then a selection buffer, that permits
-;; to examine and choose entries to add to the bibliography file, or to
-;; insert into the current buffer.
-
-;; The function is called through "M-x bibretrieve".  Then it prompts for
-;; author and title.  For an advanced use, that permits to select which
-;; backend to use, call it with "C-u M-x bibretrieve".
-
-;; The configuration is done with the variable bibretrieve-backends, that
-;; is an alist with pairs containing the backend to use and the timeout
-;; for it.  See the README file for the list of supported backends.
-
+;; Usage: call
+;;   M-x bibretrieve
+;; Enter (part of) the author's name and/or title.
+;; Matching BibTeX entries are fetched using the configured backends
+;; and displayed in a selection buffer.
+;; The entries can then be appended to the bibliography file
+;; or inserted into the current buffer.
+;;
+;; Configuration:
+;; To select which backends to use customize the variable "bibretrieve-backends".
+;; To select a backend for a single invocation call the function with
+;;   C-u M-x bibretrieve
+;;
+;; Extension:
 ;; To create a new backend define a new function
 ;; "bibretrieve-backend-NAME" that takes as input author and title
-;; and returns a buffer that contains some bibtex entries.
+;; and returns a buffer that contains bibtex entries.
 ;; The function should be defined in "bibretrieve-base.el".
 ;; It is then necessary to advise bibretrieve of the new backend,
 ;; adding NAME to the list "bibretrieve-installed-backends".
-
+;;
 ;; The url is retrieved via mm-url.  You may want to customize the
 ;; variable mm-url-use-external and mm-url-program.
-
+;;
 ;; Acknowledgments: This program has been inspired by bibsnarf.  The
 ;; functions that create the urls for most backends are taken from
 ;; there.  This program uses the library mm-url.  This programs also uses
@@ -57,11 +61,9 @@
 
 (eval-when-compile (require 'cl))
 
-(defconst bibretrieve-version "0.1"
-  "Version string for BibRetrieve.")
-
+(eval-and-compile
 (defgroup bibretrieve nil
-  "BibRetrieve: Retrieve bibliography entries from the internet."
+  "BibRetrieve: Retrieve BibTeX entries from the internet."
   :group 'tools)
 
 (defvar bibretrieve-installed-backends '("msn" "mrl" "arxiv" "citebase" "inspire" "zbm" )
@@ -83,6 +85,7 @@ Timeout should be an integer number of seconds."
 (define-key-after
   (lookup-key (current-global-map) [menu-bar tools])
   [bibretrieve] '("BibRetrieve" . bibretrieve))
+)
 
 (autoload 'bibretrieve "bibretrieve-base"
     " Search the web for bibliography entries.  After prompting for
