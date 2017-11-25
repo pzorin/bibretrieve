@@ -75,12 +75,22 @@ started with the command \\[bibretrieve-get].")
 		  ("fn" . "130")
 		  ("fmt" . "bibtex")
 		  ("bdlall" . "Retrieve+All")))
-(url (concat "http://www.ams.org/mathscinet/search/publications.html?" (mm-url-encode-www-form-urlencoded pairs)))
-	 (buffer (bibretrieve-generate-new-buffer)))
+	 (url (concat "http://www.ams.org/mathscinet/search/publications.html?" (mm-url-encode-www-form-urlencoded pairs)))
+	 (buffer (bibretrieve-http url)))
     (with-current-buffer buffer
-      (message "Retrieving %s" url)
-      (mm-url-insert-file-contents url)
-(goto-char (point-min))
+      (goto-char (point-min))
+      (while (re-search-forward "URL = {https://doi.org/" nil t)
+	(replace-match "DOI = {"))
+      buffer)))
+
+(defun bibretrieve-backend-mrl (author title)
+  (let* ((pairs `(("ti" . ,title)
+		  ("au" . ,author)
+		  ("format" . "bibtex")))
+    (url (concat "http://www.ams.org/mrlookup?" (mm-url-encode-www-form-urlencoded pairs)))
+	 (buffer (bibretrieve-http url)))
+    (with-current-buffer buffer
+      (goto-char (point-min))
       (while (re-search-forward "URL = {https://doi.org/" nil t)
 	(replace-match "DOI = {"))
       buffer)))
@@ -100,18 +110,13 @@ started with the command \\[bibretrieve-get].")
 
 (defun bibretrieve-backend-zbm (author title)
   (let* ((url (concat "https://zbmath.org/?" (mm-url-encode-www-form-urlencoded `(("au" . ,author) ("ti" . ,title)))))
-	 (buffer (bibretrieve-generate-new-buffer))
-	 list-of-bib-urls
+	 (buffer (bibretrieve-http url))
+	 (list-of-bib-urls (bibretrieve-matches-in-buffer "bibtex/[a-zA-Z0-9.]*.bib" buffer))
 	 bib-url)
     (with-current-buffer buffer
-      (message "Retrieving %s" url)
-      (mm-url-insert-file-contents url)
-      (setq list-of-bib-urls (bibretrieve-matches-in-buffer "bibtex/[a-zA-Z0-9.]*.bib" buffer))
-      (erase-buffer)
+       (erase-buffer)
       (dolist (bib-url list-of-bib-urls)
-	(setq bib-url (concat "https://zbmath.org/" bib-url))
-	(message "Retrieving %s" bib-url)
-	(mm-url-insert-file-contents bib-url)
+	(bibretrieve-http (concat "https://zbmath.org/" bib-url) buffer)
 	(goto-char (point-max))
 	(insert "\n") ; A bibtex entry may not start on the line on which the previous entry ends
 	)
@@ -127,10 +132,8 @@ started with the command \\[bibretrieve-get].")
 				       ("ttl_logic" . "AND")
 				       ("title" . ,title)
 				       ("data_type" . "BIBTEX")))))
-	 (buffer (bibretrieve-generate-new-buffer)))
+	 (buffer (bibretrieve-http url)))
     (with-current-buffer buffer
-      (message "Retrieving %s" url)
-      (mm-url-insert-file-contents url)
       ;; Remove useless fields
       (goto-char (point-min))
       (while (re-search-forward "^.*adsurl =.*\n" nil t)
@@ -166,12 +169,6 @@ started with the command \\[bibretrieve-get].")
       (while (re-search-forward "^.*eprint = {math/" nil t)
 	(replace-match "archivePrefix = \"arXiv\",\neprint = {math/"))
       buffer)))
-
-(defun bibretrieve-backend-mrl (author title)
-  (let* ((pairs `(("ti" . ,title)
-		  ("au" . ,author)
-		  ("format" . "bibtex"))))
-	 (bibretrieve-http (concat "http://www.ams.org/mrlookup?" (mm-url-encode-www-form-urlencoded pairs)))))
 
 ;; Modified from bibsnarf
 (defun bibretrieve-backend-citebase (author title)
@@ -209,13 +206,13 @@ started with the command \\[bibretrieve-get].")
   "Generate and return a new buffer with a bibretrieve-specific name."
   (generate-new-buffer (generate-new-buffer-name "bibretrieve-results-")))
 
-(defun bibretrieve-http (url)
+(defun bibretrieve-http (url &optional buffer)
   "Retrieve URL and return the buffer, using mm-url."
-  (let ((buffer (bibretrieve-generate-new-buffer)))
-    (with-current-buffer buffer
-      (message "Retrieving %s" url)
-      (mm-url-insert-file-contents url))
-    buffer))
+  (unless buffer (setq buffer (bibretrieve-generate-new-buffer)))
+  (with-current-buffer buffer
+    (message "Retrieving %s" url)
+    (mm-url-insert-file-contents url))
+  buffer)
 
 (defun bibretrieve-retrieve-backend (author title backend timeout)
   "Call the backend BACKEND with AUTHOR, TITLE and TIMEOUT. Return buffer with results."
