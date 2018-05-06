@@ -41,28 +41,19 @@
 (defvar bibretrieve-backends)
 (defvar bibretrieve-installed-backends)
 
-(defvar bibretrieve-select-map nil
-  "Keymap used for *RefTeX Select* buffer, when selecting a BibTeX entry.
-This keymap can be used to configure the BibTeX selection process which is
-started with the command \\[bibretrieve-get].")
+(defconst bibretrieve-buffer-name-prefix "bibretrieve-results-")
 
-;; Prompt and help string for citation selection
-(defconst bibretrieve-select-prompt
-  "Select: [n]ext [p]revious a[g]ain [r]efine [f]ull_entry [q]uit RET [?]Help+more")
+(defun bibretrieve-generate-new-buffer ()
+  "Generate and return a new buffer with a bibretrieve-specific name."
+  (generate-new-buffer (generate-new-buffer-name bibretrieve-buffer-name-prefix)))
 
-;; Adapted from RefTeX
-(defconst bibretrieve-select-help
-  " n / p      Go to next/previous entry (Cursor motion works as well).
- g / r      Start over with new search / Refine with additional regexp.
- SPC        Show full database entry in other window.
- f          Toggle follow mode: Other window will follow with full db entry.
- .          Show current append point.
- q          Quit.
- TAB        Enter citation key with completion.
- RET        Accept current entry (also on mouse-2), and append it to default BibTeX file.
- m / u      Mark/Unmark the entry.
- e / E      Append all (marked/unmarked) entries to default BibTeX file.
- a / A      Put all (marked) entries into current buffer.")
+(defun bibretrieve-http (url &optional buffer)
+  "Retrieve URL and return the buffer, using mm-url."
+  (unless buffer (setq buffer (bibretrieve-generate-new-buffer)))
+  (with-current-buffer buffer
+    (message "Retrieving %s" url)
+    (mm-url-insert-file-contents url))
+  buffer)
 
 (defun bibretrieve-backend-msn (author title)
   (let* ((pairs `(("bdlback" . "r=1")
@@ -202,44 +193,42 @@ started with the command \\[bibretrieve-get].")
 		  ("rg" . "100"))))
   (bibretrieve-http (concat "http://inspirehep.net/search?" (mm-url-encode-www-form-urlencoded pairs)))))
 
-(defun bibretrieve-generate-new-buffer ()
-  "Generate and return a new buffer with a bibretrieve-specific name."
-  (generate-new-buffer (generate-new-buffer-name "bibretrieve-results-")))
-
-(defun bibretrieve-http (url &optional buffer)
-  "Retrieve URL and return the buffer, using mm-url."
-  (unless buffer (setq buffer (bibretrieve-generate-new-buffer)))
-  (with-current-buffer buffer
-    (message "Retrieving %s" url)
-    (mm-url-insert-file-contents url))
-  buffer)
-
-(defun bibretrieve-retrieve-backend (author title backend timeout)
+(defun bibretrieve-use-backend (backend author title timeout)
   "Call the backend BACKEND with AUTHOR, TITLE and TIMEOUT. Return buffer with results."
   (let* ((function-backend (intern (concat "bibretrieve-backend-" backend))))
     (if (functionp function-backend)
 	(with-timeout (timeout) (funcall function-backend author title))
       (message (concat "Backend " backend " is not defined.")))))
-      
+
+(defun bibretrieve-extract-bib-entries (buffers)
+  "Extract all bib entries from BUFFERS.
+BUFFERS is a list of buffers or file names.
+Return list with entries."
+  (flet ((reftex--query-search-regexps (default) nil) ; Do not ask for a REGEXP
+	 (reftex-get-bibkey-default () "=")) ; Match all bib entries
+    (reftex-extract-bib-entries buffers)))
+
 (defun bibretrieve-retrieve (author title backends &optional newtimeout)
   "Search AUTHOR and TITLE on BACKENDS.
 If NEWTIMEOUT is given, this replaces the timeout for all backends.
-Returns list of buffers with results."
-  (let (buffers)
+Return list with entries."
+  (let (buffers buffer found-list)
     (dolist (backend backends)
       (let* ((timeout (or (or newtimeout (cdr (assoc backend bibretrieve-backends))) "0"))
-	     (buffer (bibretrieve-retrieve-backend author title backend timeout)))
+	     (buffer (bibretrieve-use-backend backend author title timeout)))
 	(if (bufferp buffer)
 	    (add-to-list 'buffers buffer)
 	  (message (concat "Backend " backend " failed.")))))
-    buffers))
+    (setq found-list (bibretrieve-extract-bib-entries buffers))
+    found-list))
 
 (defun bibretrieve-prompt-and-retrieve (&optional arg)
   "Prompt for author and title and retrieve.
 If the optional argument ARG is an integer
 then it is used as the timeout (in seconds).
 If the optional argument ARG is non-nil and not integer,
-prompt for the backends to use and the timeout."
+prompt for the backends to use and the timeout.
+Return list with entries."
   (let* ((author (read-string "Author: "))
 	 (title (read-string "Title: "))
 	 backend backends timeout)
@@ -303,7 +292,7 @@ else return nil."
 (defun bibretrieve-write-bib-items-bibliography (all bibfile marked complement)
   "Append item to file.
 
-From ALL, append to a promped file (BIBFILE is the default one) MARKED entries (or unmarked, if COMPLEMENT is t)."
+From ALL, append to a prompted file (BIBFILE is the default one) MARKED entries (or unmarked, if COMPLEMENT is t)."
   (let ((file (read-file-name (if bibfile (concat "Bibfile: [" bibfile "] ") "Bibfile: ") default-directory bibfile)))
     (if (find-file-other-window file)
 	(save-excursion
@@ -336,103 +325,23 @@ From ALL, append to a promped file (BIBFILE is the default one) MARKED entries (
     )
   )
 
+;; Prompt and help string for citation selection
+(defconst bibretrieve-select-prompt
+  "Select: [n]ext [p]revious a[g]ain [r]efine [f]ull_entry [q]uit RET [?]Help+more")
 
-;; Modified version of reftex-extract-bib-entries
-;; It does not ask for a REGEXP, but it selects all
-(defun bibretrieve-extract-bib-entries (buffers)
-  "Extract bib entries which match regexps from BUFFERS.
-BUFFERS is a list of buffers or file names.
-Return list with entries.\""
-  (let* (        (buffer-list (if (listp buffers) buffers (list buffers)))
-                 found-list entry buffer1 buffer alist
-                 key-point start-point end-point default)
-
-    (save-excursion
-      (save-window-excursion
-
-        ;; Walk through all bibtex files
-        (while buffer-list
-          (setq buffer (car buffer-list)
-                buffer-list (cdr buffer-list))
-          (if (and (bufferp buffer)
-                   (buffer-live-p buffer))
-              (setq buffer1 buffer)
-            (setq buffer1 (reftex-get-file-buffer-force
-                           buffer (not reftex-keep-temporary-buffers))))
-          (if (not buffer1)
-              (message "No such BibTeX file %s (ignored)" buffer)
-            (message "Scanning bibliography database %s" buffer1)
-	    (unless (verify-visited-file-modtime buffer1)
-		 (when (y-or-n-p
-			(format "File %s changed on disk.  Reread from disk? "
-				(file-name-nondirectory
-				 (buffer-file-name buffer1))))
-		   (with-current-buffer buffer1 (revert-buffer t t)))))
-
-          (set-buffer buffer1)
-          (reftex-with-special-syntax-for-bib
-           (save-excursion
-             (goto-char (point-min))
-             (while (re-search-forward "=" nil t)
-               (catch 'search-again
-                 (setq key-point (point))
-                 (unless (re-search-backward "\\(\\`\\|[\n\r]\\)[ \t]*\
-@\\(\\(?:\\w\\|\\s_\\)+\\)[ \t\n\r]*[{(]" nil t)
-                   (throw 'search-again nil))
-                 (setq start-point (point))
-                 (goto-char (match-end 0))
-                 (condition-case nil
-                     (up-list 1)
-                   (error (goto-char key-point)
-                          (throw 'search-again nil)))
-                 (setq end-point (point))
-
-                 ;; Ignore @string, @comment and @c entries or things
-                 ;; outside entries
-                 (when (or (string= (downcase (match-string 2)) "string")
-                           (string= (downcase (match-string 2)) "comment")
-                           (string= (downcase (match-string 2)) "c")
-                           (< (point) key-point)) ; this means match not in {}
-                   (goto-char key-point)
-                   (throw 'search-again nil))
-
-                 ;; Well, we have got a match
-                 ;;(setq entry (concat
-                 ;;             (buffer-substring start-point (point)) "\n"))
-                 (setq entry (buffer-substring start-point (point)))
-
-                 (setq alist (reftex-parse-bibtex-entry
-                              nil start-point end-point))
-                 (push (cons "&entry" entry) alist)
-
-                 ;; check for crossref entries
-                 (if (assoc "crossref" alist)
-                     (setq alist
-                           (append
-                            alist (reftex-get-crossref-alist alist))))
-
-                 ;; format the entry
-                 (push (cons "&formatted" (reftex-format-bib-entry alist))
-                       alist)
-
-                 ;; make key the first element
-                 (push (reftex-get-bib-field "&key" alist) alist)
-
-                 ;; add it to the list
-                 (push alist found-list)))))
-          (reftex-kill-temporary-buffers))))
-    (setq found-list (nreverse found-list))
-
-    ;; Sorting
-    (cond
-     ((eq 'author reftex-sort-bibtex-matches)
-      (sort found-list 'reftex-bib-sort-author))
-     ((eq 'year   reftex-sort-bibtex-matches)
-      (sort found-list 'reftex-bib-sort-year))
-     ((eq 'reverse-year reftex-sort-bibtex-matches)
-      (sort found-list 'reftex-bib-sort-year-reverse))
-     (t found-list))))
-
+;; Adapted from RefTeX
+(defconst bibretrieve-select-help
+  " n / p      Go to next/previous entry (Cursor motion works as well).
+ g / r      Start over with new search / Refine with additional regexp.
+ SPC        Show full database entry in other window.
+ f          Toggle follow mode: Other window will follow with full db entry.
+ .          Show current append point.
+ q          Quit.
+ TAB        Enter citation key with completion.
+ RET        Accept current entry (also on mouse-2), and append it to default BibTeX file.
+ m / u      Mark/Unmark the entry.
+ e / E      Append all (marked/unmarked) entries to default BibTeX file.
+ a / A      Put all (marked) entries into current buffer.")
 
 ;; Modified version of reftex-offer-bib-menu
 (defun bibretrieve-offer-bib-menu (&optional arg)
@@ -445,18 +354,10 @@ ARG is the optional argument."
         (not
          (catch 'done
            ;; Retrieve and scan entries
-	   (let ((buffers (bibretrieve-prompt-and-retrieve arg)) buffer-list buffer)
-	     (setq found-list (bibretrieve-extract-bib-entries buffers))
-	     (setq buffer-list (if (listp buffers) buffers (list buffers)))
-	     (while buffer-list
-	       (setq buffer (car buffer-list)
-		     buffer-list (cdr buffer-list))
-	       (kill-buffer buffer)
-	       )
-	     )
+	   (setq found-list (bibretrieve-prompt-and-retrieve arg))
 
            (unless found-list
-             (error "Sorry, no matches found"))
+             (error "No matches found"))
 
           ;; Remember where we came from
           (setq reftex-call-back-to-this-buffer (current-buffer))
@@ -548,8 +449,6 @@ ARG is the optional argument."
     selected-entries))
 
 
-
-
 ;; Get records from the web and insert them in the bibliography
 
 ;; Adapted from RefTeX
@@ -563,8 +462,8 @@ backends specified by the customization variable
 allows to select entries to add to the current buffer or to a
 bibliography file.
 
- When called with a `C-u' prefix, permits to select the backend and the
- timeout for the search."
+When called with a `C-u' prefix, permits to select the backend and the
+timeout for the search."
 
   (interactive)
 
@@ -583,7 +482,8 @@ bibliography file.
     (progn
       (reftex-kill-temporary-buffers)
       (reftex-kill-buffer "*BibRetrieve Record*")
-      (reftex-kill-buffer "*RefTeX Select*"))))
+      (reftex-kill-buffer "*RefTeX Select*")
+      (kill-matching-buffers (concat "^" bibretrieve-buffer-name-prefix) nil t))))
 
 ;; Adapted from RefTeX
 (defun bibretrieve-do-retrieve (&optional arg)
@@ -594,13 +494,6 @@ ARG is the optional argument."
 
     (set-marker reftex-select-return-marker nil)
 
-    ;; (when (stringp selected-entries)
-    ;;   (message selected-entries))
-    ;; (unless selected-entries (message "Quit"))
- 
-    ;; (insert (bibretrieve-extract-bib-items selected-entries))
-    ;; (message "fin qui ok")
-
     (if (stringp selected-entries)
       (message selected-entries)
       (if (not selected-entries)
@@ -609,9 +502,6 @@ ARG is the optional argument."
 	)
       )
     ))
-
-    ;; Return the citation key
-;;    (mapcar 'car selected-entries)))
 
 (provide 'bibretrieve-base)
 
