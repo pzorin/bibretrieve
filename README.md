@@ -21,7 +21,7 @@ cd ~/.emacs.d
 git clone git://github.com/pzorin/bibretrieve.git
 ```
 
-* Add instructions to the file `~/.emacs` to load BibRetrieve:
+* Add instructions e.g. to `init.el` to load BibRetrieve:
 
 ```lisp
 (add-to-list 'load-path "~/.emacs.d/bibretrieve")
@@ -38,8 +38,7 @@ Usage
 Configuration
 -------------
 
-BibRetrieve can be configured with customize.
-Anyway, it is probably easier to edit `~/.emacs` directly.
+BibRetrieve can be configured with `customize`, but it is probably easier to edit e.g. `init.el` directly.
 
 To configure the backends used, set the variable `bibretrieve-backends`.
 This is an alist with the names of the backends as keys and the timeouts as values.
