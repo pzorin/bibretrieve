@@ -483,7 +483,7 @@ timeout for the search."
       (reftex-kill-temporary-buffers)
       (reftex-kill-buffer "*BibRetrieve Record*")
       (reftex-kill-buffer "*RefTeX Select*")
-      (kill-matching-buffers (concat "^" bibretrieve-buffer-name-prefix) nil t))))
+      (kill-matching-buffers (concat "^" bibretrieve-buffer-name-prefix)))))
 
 ;; Adapted from RefTeX
 (defun bibretrieve-do-retrieve (&optional arg)
