@@ -222,6 +222,7 @@ Return list with entries."
     (setq found-list (bibretrieve-extract-bib-entries buffers))
     found-list))
 
+(defvar bibretrieve-author-history nil)
 (defun bibretrieve-prompt-and-retrieve (&optional arg)
   "Prompt for author and title and retrieve.
 If the optional argument ARG is an integer
@@ -229,14 +230,14 @@ then it is used as the timeout (in seconds).
 If the optional argument ARG is non-nil and not integer,
 prompt for the backends to use and the timeout.
 Return list with entries."
-  (let* ((author (read-string "Author: "))
+  (let* ((author (completing-read "Author: " () nil nil nil 'bibretrieve-author-history))
 	 (title (read-string "Title: "))
 	 backend backends timeout)
     (when arg
       (if (integerp arg)
 	  (setq timeout arg)
 	(progn (setq backend (completing-read "Backend to use: [defaults] " (append bibretrieve-installed-backends '("DEFAULTS" "ALL")) nil t nil nil "DEFAULTS"))
-	       (setq timeout (read-string "Timeout (seconds): [5] " nil nil "5")))))
+	       (setq timeout (read-number "Timeout (seconds) " 5)))))
     (setq backends
 	  (cond ((or (not backend) (equal backend "DEFAULTS"))
 		 (mapcar 'car bibretrieve-backends))
