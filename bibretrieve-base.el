@@ -66,24 +66,20 @@
 		  ("fn" . "130")
 		  ("fmt" . "bibtex")
 		  ("bdlall" . "Retrieve+All")))
-	 (url (concat "http://www.ams.org/mathscinet/search/publications.html?" (mm-url-encode-www-form-urlencoded pairs)))
+	 (url (concat "https://mathscinet.ams.org/mathscinet/search/publications.html?" (mm-url-encode-www-form-urlencoded pairs)))
 	 (buffer (bibretrieve-http url)))
     (with-current-buffer buffer
-      (goto-char (point-min))
-      (while (re-search-forward "URL = {https://doi.org/" nil t)
-	(replace-match "DOI = {"))
+      (delete-matching-lines "URL = {https://doi.org/" (point-min) (point-max) nil)
       buffer)))
 
 (defun bibretrieve-backend-mrl (author title)
   (let* ((pairs `(("ti" . ,title)
 		  ("au" . ,author)
 		  ("format" . "bibtex")))
-    (url (concat "http://www.ams.org/mrlookup?" (mm-url-encode-www-form-urlencoded pairs)))
+    (url (concat "https://mathscinet.ams.org/mrlookup?" (mm-url-encode-www-form-urlencoded pairs)))
 	 (buffer (bibretrieve-http url)))
     (with-current-buffer buffer
-      (goto-char (point-min))
-      (while (re-search-forward "URL = {https://doi.org/" nil t)
-	(replace-match "DOI = {"))
+      (delete-matching-lines "URL = {https://doi.org/" (point-min) (point-max) nil)
       buffer)))
 
 (defun bibretrieve-matches-in-buffer (regexp &optional buffer)
