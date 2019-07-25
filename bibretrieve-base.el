@@ -40,6 +40,7 @@
 ;; Here only to silence the compilator
 (defvar bibretrieve-backends)
 (defvar bibretrieve-installed-backends)
+(defvar bibretrieve-prompt-for-bibtex-file t)
 
 (defconst bibretrieve-buffer-name-prefix "bibretrieve-results-")
 
@@ -287,10 +288,15 @@ else return nil."
     )
 
 (defun bibretrieve-write-bib-items-bibliography (all bibfile marked complement)
-  "Append item to file.
+  "Append MARKED entries from ALL to BIBFILE.
 
-From ALL, append to a prompted file (BIBFILE is the default one) MARKED entries (or unmarked, if COMPLEMENT is t)."
-  (let ((file (read-file-name (if bibfile (concat "Bibfile: [" bibfile "] ") "Bibfile: ") default-directory bibfile)))
+If the variable 'bibretrieve-prompt-for-bibtex-file' is t,
+prompt for a file first (BIBFILE is the default one).
+If COMPLEMENT is t, append non-marked entries instead."
+  (let ((file
+         (if bibretrieve-prompt-for-bibtex-file
+             (read-file-name (if bibfile (concat "Bibfile: [" bibfile "] ") "Bibfile: ") default-directory bibfile)
+           bibfile)))
     (if (find-file-other-window file)
 	(save-excursion
 	  (goto-char (point-max))

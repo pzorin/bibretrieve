@@ -61,6 +61,12 @@ Backend | Key
 
 If you want to add a backend, read the Commentary section in the source file `bibretrieve.el`.
 
+If you don't want to be prompted for a bibtex file but instead perform all operations on the default one, set the variable `bibretrieve-prompt-for-bibtex-file` to nil. The default file is the first non-empty result of
+
+1. the first bibtex file used in the current document (obtained by calling `reftex-get-bibfile-list`)
+2. the bibtex file defined in the variable `reftex-default-bibliography`
+3. the currently opened buffer if it has a .bib extension
+
 Network requests are handled by `mm-url`, by default this uses the library `url`.
 If you want to use an external program, like `wget` or `curl`, put it in the variable `mm-url-program` and set the variable `mm-url-use-external` to `t`.
 
