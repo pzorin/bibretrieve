@@ -45,7 +45,7 @@ This is an alist with the names of the backends as keys and the timeouts as valu
 The default configuration is:
 
 ```lisp
-(setq bibretrieve-backends '(("mrl" . 10) ("arxiv" . 5) ("zbm" . 5)))
+(setq bibretrieve-backends '(("mrl" . 10) ("zbm" . 5)))
 ```
 
 The following backends are included in the repository.
@@ -58,6 +58,8 @@ Backend | Key
 [Citebase](http://www.citebase.org) | "citebase"
 [Inspire](http://inspirehep.net) | "inspire"
 [Zentralblatt MATH](http://www.zentralblatt-math.org/zmath) | "zbm"
+
+The arXiv backend is currently disabled, because I do not know how to export bibtex from the new adsabs api. In any case, it appears to be a better idea to make this package part of `biblio.el` in the long run.
 
 If you want to add a backend, read the Commentary section in the source file `bibretrieve.el`.
 
